@@ -76,45 +76,46 @@
 namespace gtest_mpi {
 namespace { // no external linkage
 
-class EnvironmentMPI : public ::testing::Environment {
+class MPITestEnvironment : public ::testing::Environment {
 public:
-  EnvironmentMPI(int& argc, char**& argv) : ::testing::Environment(), self_initialized_(false) {
-    int initialized;
-    MPI_Initialized(&initialized);
-    if (!initialized) {
-      MPI_Init(&argc, &argv);
-      self_initialized_ = true;
+  MPITestEnvironment() : ::testing::Environment() {}
+
+  MPITestEnvironment(const MPITestEnvironment&) = delete;
+
+  MPITestEnvironment(MPITestEnvironment&&) = default;
+
+  static MPI_Comm GetComm() { return global_test_comm; }
+
+  void SetUp() override {
+    if (global_test_comm != MPI_COMM_WORLD) {
+      MPI_Comm_free(&global_test_comm);
+      global_test_comm = MPI_COMM_WORLD;
     }
+    MPI_Comm_dup(MPI_COMM_WORLD, &global_test_comm);
   }
 
-  EnvironmentMPI(const EnvironmentMPI&) = delete;
-
-  EnvironmentMPI(EnvironmentMPI&&) = default;
-
   void TearDown() override {
-    if (self_initialized_) {
-      int finalized;
-      MPI_Finalized(&finalized);
-      if (!finalized) {
-        MPI_Finalize();
-      }
+    if (global_test_comm != MPI_COMM_WORLD) {
+      MPI_Comm_free(&global_test_comm);
+      global_test_comm = MPI_COMM_WORLD;
     }
   }
 
 private:
-  bool self_initialized_;
+  static MPI_Comm global_test_comm;
 };
+MPI_Comm MPITestEnvironment::global_test_comm = MPI_COMM_WORLD;
 
 class PrettyMPIUnitTestResultPrinter : public ::testing::TestEventListener {
 public:
-  PrettyMPIUnitTestResultPrinter(MPI_Comm comm)
-      : rank_(0), comm_size_(1), comm_(comm), num_sucessfull_tests_(0), num_failed_tests_(0) {
+  PrettyMPIUnitTestResultPrinter()
+      : rank_(0),
+        comm_size_(1),
+        comm_(MPITestEnvironment::GetComm()),
+        num_sucessfull_tests_(0),
+        num_failed_tests_(0) {
     MPI_Comm_rank(comm_, &rank_);
     MPI_Comm_size(comm_, &comm_size_);
-  }
-
-  static void PrintTestName(const char* test_case, const char* test) {
-    printf("%s.%s", test_case, test);
   }
 
   // The following methods override what's in the TestEventListener class.
@@ -134,7 +135,6 @@ public:
   void OnTestProgramEnd(const ::testing::UnitTest& /*unit_test*/) override {}
 
 private:
-  static void PrintFailedTestResultCollection(const TestPartResultCollection& collection, int rank);
   int rank_;
   int comm_size_;
   MPI_Comm comm_;
@@ -208,7 +208,8 @@ void PrettyMPIUnitTestResultPrinter::OnTestCaseStart(const ::testing::TestCase& 
 void PrettyMPIUnitTestResultPrinter::OnTestStart(const ::testing::TestInfo& test_info) {
   if (rank_ != 0) return;
   ColoredPrintf(COLOR_GREEN, "[ RUN      ] ");
-  PrintTestName(test_info.test_case_name(), test_info.name());
+  printf("%s.%s", test_info.test_case_name(), test_info.name());
+
   printf("\n");
   fflush(stdout);
 }
@@ -223,8 +224,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartR
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::PrintFailedTestResultCollection(
-    const TestPartResultCollection& collection, int rank) {
+void PrintFailedTestResultCollection(const TestPartResultCollection& collection, int rank) {
   for (std::size_t i = 0; i < collection.Size(); ++i) {
     std::string m =
         (::testing::Message() << "Rank " << rank << ": "
@@ -303,7 +303,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_i
     failed_test_properties_.emplace_back(std::move(prop));
   }
 
-  PrintTestName(test_info.test_case_name(), test_info.name());
+  printf("%s.%s", test_info.test_case_name(), test_info.name());
   if (failed_globally) PrintFullTestCommentIfPresent(test_info);
 
   if (GTEST_FLAG(print_time)) {

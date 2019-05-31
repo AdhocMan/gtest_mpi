@@ -16,25 +16,30 @@ All ranks MUST execute all tests in the same order.
 #include "gtest/gtest.h"
 #include "gtest_mpi/gtest_mpi.hpp"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
+  // Initialize MPI before any call to gtest_mpi
+  MPI_Init(&argc, &argv);
+
+  // Intialize google test
   ::testing::InitGoogleTest(&argc, argv);
 
-  // Adding an environment will make sure MPI_Initialize is called. It will also call MPI_Finallize
-  // if MPI was not initialized before.
-  ::testing::AddGlobalTestEnvironment(new gtest_mpi::EnvironmentMPI(argc, argv));
+  // Add a test envirnment, which will initialize a test communicator
+  // (a duplicate of MPI_COMM_WORLD)
+  ::testing::AddGlobalTestEnvironment(new gtest_mpi::MPITestEnvironment());
 
-  // Before adding a new listener, the default one has to be removed
-  delete ::testing::UnitTest::GetInstance()->listeners().Release(
-      ::testing::UnitTest::GetInstance()->listeners().default_result_printer());
+  auto& test_listeners = ::testing::UnitTest::GetInstance()->listeners();
 
-  // Add the MPI listener, which will collect errors from all ranks within
-  // the given communicator and print on rank 0
-  ::testing::UnitTest::GetInstance()->listeners().Append(
-      new gtest_mpi::PrettyMPIUnitTestResultPrinter(MPI_COMM_WORLD));
+  // Remove default listener and replace with the custom MPI listener
+  delete test_listeners.Release(test_listeners.default_result_printer());
+  test_listeners.Append(new gtest_mpi::PrettyMPIUnitTestResultPrinter());
 
-  // All tests MUST be run in the same order on all ranks.
-  RUN_ALL_TESTS();
-  return 0; // avoid error message from mpirun for non-zero exit codes
+  // run tests
+  auto exit_code = RUN_ALL_TESTS();
+
+  // Finalize MPI before exiting
+  MPI_Finalize();
+
+  return exit_code;
 }
 ```
 
