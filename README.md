@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   // Intialize google test
   ::testing::InitGoogleTest(&argc, argv);
 
-  // Add a test envirnment, which will initialize a test communicator
+  // Add a test environment, which will initialize a test communicator
   // (a duplicate of MPI_COMM_WORLD)
   ::testing::AddGlobalTestEnvironment(new gtest_mpi::MPITestEnvironment());
 
