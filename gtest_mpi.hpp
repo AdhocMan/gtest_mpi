@@ -74,7 +74,7 @@
 #include "gtest_mpi_internal.hpp"
 
 namespace gtest_mpi {
-namespace { // no external linkage
+namespace {  // no external linkage
 
 class MPITestEnvironment : public ::testing::Environment {
 public:
@@ -183,6 +183,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitT
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnEnvironmentsSetUpStart(
     const ::testing::UnitTest& /*unit_test*/) {
+  if (rank_ != 0) return;
   ColoredPrintf(COLOR_GREEN, "[----------] ");
   printf("Global test environment set-up.\n");
   fflush(stdout);
@@ -389,7 +390,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTes
   int num_disabled = unit_test.reportable_disabled_test_count();
   if (num_disabled && !GTEST_FLAG(also_run_disabled_tests)) {
     if (!num_failed_tests_) {
-      printf("\n"); // Add a spacer if no FAILURE banner is displayed.
+      printf("\n");  // Add a spacer if no FAILURE banner is displayed.
     }
     ColoredPrintf(COLOR_YELLOW, "  YOU HAVE %d DISABLED %s\n\n", num_disabled,
                   num_disabled == 1 ? "TEST" : "TESTS");
@@ -407,8 +408,8 @@ void PrettyMPIUnitTestResultPrinter::OnEnvironmentsTearDownStart(
   fflush(stdout);
 }
 
-} // anonymous namespace
-} // namespace gtest_mpi
+}  // anonymous namespace
+}  // namespace gtest_mpi
 
 #endif
 
