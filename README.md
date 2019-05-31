@@ -1,15 +1,19 @@
 # GTest MPI
-This project provides an extension to the Googletest framework, to allow the collection of errors on the root rank, when run with MPI.
+This project provides an extension to the Google Test framework, to allow testing of MPI enabled applications. 
+The implementation includes a custom MPI environment and listener, with which all test failure messages are collected on the root process and the output includes the rank index for each failure.
 
 
 ## Requirements
-- Googltest version 1.8.1 (other versions may work as well, depending on changes to Listener or Environment interfaces)
+- Google Test version 1.8.1 (other versions may work as well, depending on changes to Listener or Environment interfaces)
 - A MPI library
 - At least C++ 11.
 - Linux or macOS
 
 ## Limitations
-All ranks MUST execute all tests in the same order.
+- All ranks MUST execute all tests in the same order. Within a test, the executed assertions may differ. If a test should run only on a subset of ranks, the excluded ranks must enter the test, but may exit immediately.
+- Logging features of Google Test are not supported
+
+
 
 ## Example
 ```
