@@ -3,9 +3,10 @@ This project provides an extension to the Googletest framework, to allow the col
 
 
 ## Requirements
-- Googltest version 1.8.1
+- Googltest version 1.8.1 (other versions may work as well, depending on changes to Listener or Environment interfaces)
 - A MPI library
 - At least C++ 11.
+- Linux or macOS
 
 ## Limitations
 All ranks MUST execute all tests in the same order.
