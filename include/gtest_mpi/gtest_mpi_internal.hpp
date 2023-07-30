@@ -96,9 +96,9 @@ static const char kValueParamLabel[] = "GetParam()";
 enum GTestColor { COLOR_DEFAULT, COLOR_RED, COLOR_GREEN, COLOR_YELLOW };
 
 // Taken / modified from Googletest
-static void PrintFullTestCommentIfPresent(const ::testing::TestInfo& test_info) {
-  const char* const type_param = test_info.type_param();
-  const char* const value_param = test_info.value_param();
+void PrintFullTestCommentIfPresent(const ::testing::TestInfo &test_info) {
+  const char *const type_param = test_info.type_param();
+  const char *const value_param = test_info.value_param();
 
   if (type_param != NULL || value_param != NULL) {
     printf(", where ");
@@ -112,9 +112,9 @@ static void PrintFullTestCommentIfPresent(const ::testing::TestInfo& test_info) 
   }
 }
 
-bool CStringEquals(const char* l, const char* r) { return std::strcmp(l, r) == 0; }
+bool CStringEquals(const char *l, const char *r) { return std::strcmp(l, r) == 0; }
 
-bool CaseInsensitiveCStringEquals(const char* l, const char* r) {
+bool CaseInsensitiveCStringEquals(const char *l, const char *r) {
   bool equal = true;
 
   for (; equal && *l && *r; ++l, ++r) {
@@ -128,11 +128,11 @@ bool CaseInsensitiveCStringEquals(const char* l, const char* r) {
 // Taken / modified from Googletest
 bool ShouldUseColor(bool stdout_is_tty) {
   using namespace ::testing;
-  const char* const gtest_color = GTEST_FLAG(color).c_str();
+  const char *const gtest_color = GTEST_FLAG(color).c_str();
 
   if (CaseInsensitiveCStringEquals(gtest_color, "auto")) {
     // On non-Windows platforms, we rely on the TERM variable.
-    const char* const term = getenv("TERM");
+    const char *const term = getenv("TERM");
     const bool term_supports_color =
         CStringEquals(term, "xterm") || CStringEquals(term, "xterm-color") ||
         CStringEquals(term, "xterm-256color") || CStringEquals(term, "screen") ||
@@ -152,7 +152,7 @@ bool ShouldUseColor(bool stdout_is_tty) {
 }
 
 // Taken / modified from Googletest
-static const char* GetAnsiColorCode(GTestColor color) {
+const char *GetAnsiColorCode(GTestColor color) {
   switch (color) {
     case COLOR_RED:
       return "1";
@@ -166,7 +166,7 @@ static const char* GetAnsiColorCode(GTestColor color) {
 }
 
 // Taken / modified from Googletest
-static void ColoredPrintf(GTestColor color, const char* fmt, ...) {
+void ColoredPrintf(GTestColor color, const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
 
@@ -186,10 +186,10 @@ static void ColoredPrintf(GTestColor color, const char* fmt, ...) {
 }
 
 // Taken / modified from Googletest
-Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
+Int32 Int32FromEnvOrDie(const char *var, Int32 default_val) {
   using namespace ::testing;
   using namespace ::testing::internal;
-  const char* str_val = getenv(var);
+  const char *str_val = getenv(var);
   if (str_val == NULL) {
     return default_val;
   }
@@ -202,24 +202,23 @@ Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
 }
 
 // Taken / modified from Googletest
-static std::string FormatCountableNoun(int count, const char* singular_form,
-                                       const char* plural_form) {
+std::string FormatCountableNoun(int count, const char *singular_form, const char *plural_form) {
   using namespace ::testing;
   return std::to_string(count) + " " + (count == 1 ? singular_form : plural_form);
 }
 
 // Taken / modified from Googletest
-static std::string FormatTestCount(int test_count) {
+std::string FormatTestCount(int test_count) {
   return FormatCountableNoun(test_count, "test", "tests");
 }
 
 // Taken / modified from Googletest
-static std::string FormatTestCaseCount(int test_case_count) {
+std::string FormatTestCaseCount(int test_case_count) {
   return FormatCountableNoun(test_case_count, "test case", "test cases");
 }
 
 // Taken / modified from Googletest
-static const char* TestPartResultTypeToString(::testing::TestPartResult::Type type) {
+const char *TestPartResultTypeToString(::testing::TestPartResult::Type type) {
   switch (type) {
     case ::testing::TestPartResult::kSuccess:
       return "Success";
@@ -237,7 +236,7 @@ static const char* TestPartResultTypeToString(::testing::TestPartResult::Type ty
 }
 
 // Taken / modified from Googletest
-bool ShouldShard(const char* total_shards_env, const char* shard_index_env,
+bool ShouldShard(const char *total_shards_env, const char *shard_index_env,
                  bool in_subprocess_for_death_test) {
   using namespace ::testing;
   using namespace ::testing::internal;
@@ -291,7 +290,7 @@ struct TestInfoProperties {
 // which can be exchanged in a single MPI call
 class StringCollection {
 public:
-  void Add(const char* s) {
+  void Add(const char *s) {
     int size = 0;
     for (; *s != '\0'; ++s, ++size) {
       text.push_back(*s);
@@ -331,7 +330,7 @@ public:
     prev_size = 0;
   }
 
-  const char* get_str(const int id) const { return text.data() + start_indices[id]; }
+  const char *get_str(const int id) const { return text.data() + start_indices[id]; }
 
   const std::size_t Size() const { return start_indices.size(); }
 
@@ -375,7 +374,7 @@ struct TestPartResultCollection {
     file_names.Recv(comm, rank);
   }
 
-  void Add(const ::testing::TestPartResult& result) {
+  void Add(const ::testing::TestPartResult &result) {
     types.push_back(result.type());
     line_numbers.push_back(result.line_number());
     summaries.Add(result.summary());

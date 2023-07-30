@@ -83,9 +83,9 @@ class MPITestEnvironment : public ::testing::Environment {
 public:
   MPITestEnvironment() : ::testing::Environment() {}
 
-  MPITestEnvironment(const MPITestEnvironment&) = delete;
+  MPITestEnvironment(const MPITestEnvironment &) = delete;
 
-  MPITestEnvironment(MPITestEnvironment&&) = default;
+  MPITestEnvironment(MPITestEnvironment &&) = default;
 
   static MPI_Comm GetComm() { return global_test_comm; }
 
@@ -122,20 +122,20 @@ public:
   }
 
   // The following methods override what's in the TestEventListener class.
-  void OnTestIterationStart(const ::testing::UnitTest& unit_test, int iteration) override;
-  void OnEnvironmentsSetUpStart(const ::testing::UnitTest& unit_test) override;
-  void OnTestCaseStart(const ::testing::TestCase& test_case) override;
-  void OnTestStart(const ::testing::TestInfo& test_info) override;
-  void OnTestPartResult(const ::testing::TestPartResult& result) override;
-  void OnTestEnd(const ::testing::TestInfo& test_info) override;
-  void OnTestCaseEnd(const ::testing::TestCase& test_case) override;
-  void OnEnvironmentsTearDownStart(const ::testing::UnitTest& unit_test) override;
-  void OnTestIterationEnd(const ::testing::UnitTest& unit_test, int iteration) override;
+  void OnTestIterationStart(const ::testing::UnitTest &unit_test, int iteration) override;
+  void OnEnvironmentsSetUpStart(const ::testing::UnitTest &unit_test) override;
+  void OnTestCaseStart(const ::testing::TestCase &test_case) override;
+  void OnTestStart(const ::testing::TestInfo &test_info) override;
+  void OnTestPartResult(const ::testing::TestPartResult &result) override;
+  void OnTestEnd(const ::testing::TestInfo &test_info) override;
+  void OnTestCaseEnd(const ::testing::TestCase &test_case) override;
+  void OnEnvironmentsTearDownStart(const ::testing::UnitTest &unit_test) override;
+  void OnTestIterationEnd(const ::testing::UnitTest &unit_test, int iteration) override;
 
-  void OnEnvironmentsSetUpEnd(const ::testing::UnitTest& /*unit_test*/) override {}
-  void OnEnvironmentsTearDownEnd(const ::testing::UnitTest& /*unit_test*/) override {}
-  void OnTestProgramStart(const ::testing::UnitTest& /*unit_test*/) override {}
-  void OnTestProgramEnd(const ::testing::UnitTest& /*unit_test*/) override {}
+  void OnEnvironmentsSetUpEnd(const ::testing::UnitTest & /*unit_test*/) override {}
+  void OnEnvironmentsTearDownEnd(const ::testing::UnitTest & /*unit_test*/) override {}
+  void OnTestProgramStart(const ::testing::UnitTest & /*unit_test*/) override {}
+  void OnTestProgramEnd(const ::testing::UnitTest & /*unit_test*/) override {}
 
 private:
   int rank_;
@@ -149,7 +149,7 @@ private:
 };
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitTest& unit_test,
+void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitTest &unit_test,
                                                           int iteration) {
   using namespace ::testing;
   if (rank_ != 0) return;
@@ -157,7 +157,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitT
   if (GTEST_FLAG(repeat) != 1)
     printf("\nRepeating all tests (iteration %d) . . .\n\n", iteration + 1);
 
-  const char* const filter = GTEST_FLAG(filter).c_str();
+  const char *const filter = GTEST_FLAG(filter).c_str();
 
   // Prints the filter if it's not *.  This reminds the user that some
   // tests may be skipped.
@@ -185,7 +185,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitT
 // Taken / modified from Googletest
 // Formats a source file path and a line number as they would appear
 // in an error message from the compiler used to compile this code.
-GTEST_API_ ::std::string FormatFileLocation(const char* file, int line) {
+GTEST_API_ ::std::string FormatFileLocation(const char *file, int line) {
   const std::string file_name(file == nullptr ? "unkown file" : file);
 
   if (line < 0) {
@@ -200,7 +200,7 @@ GTEST_API_ ::std::string FormatFileLocation(const char* file, int line) {
 
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnEnvironmentsSetUpStart(
-    const ::testing::UnitTest& /*unit_test*/) {
+    const ::testing::UnitTest & /*unit_test*/) {
   if (rank_ != 0) return;
   ColoredPrintf(COLOR_GREEN, "[----------] ");
   printf("Global test environment set-up.\n");
@@ -208,7 +208,7 @@ void PrettyMPIUnitTestResultPrinter::OnEnvironmentsSetUpStart(
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestCaseStart(const ::testing::TestCase& test_case) {
+void PrettyMPIUnitTestResultPrinter::OnTestCaseStart(const ::testing::TestCase &test_case) {
   using namespace ::testing;
   if (rank_ != 0) return;
   const std::string counts = FormatCountableNoun(test_case.test_to_run_count(), "test", "tests");
@@ -223,7 +223,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestCaseStart(const ::testing::TestCase& 
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestStart(const ::testing::TestInfo& test_info) {
+void PrettyMPIUnitTestResultPrinter::OnTestStart(const ::testing::TestInfo &test_info) {
   if (rank_ != 0) return;
   ColoredPrintf(COLOR_GREEN, "[ RUN      ] ");
   printf("%s.%s", test_info.test_case_name(), test_info.name());
@@ -233,7 +233,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestStart(const ::testing::TestInfo& test
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartResult& result) {
+void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartResult &result) {
   using namespace ::testing;
   // If the test part succeeded, we don't need to do anything.
   if (result.type() == TestPartResult::kSuccess) return;
@@ -241,7 +241,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartR
 }
 
 // Taken / modified from Googletest
-void PrintFailedTestResultCollection(const TestPartResultCollection& collection, int rank) {
+void PrintFailedTestResultCollection(const TestPartResultCollection &collection, int rank) {
   for (std::size_t i = 0; i < collection.Size(); ++i) {
     std::string m =
         (::testing::Message()
@@ -256,7 +256,7 @@ void PrintFailedTestResultCollection(const TestPartResultCollection& collection,
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_info) {
+void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo &test_info) {
   using namespace ::testing;
 
   // check if any ranks failed
@@ -275,7 +275,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_i
   }
 
   int failed_globally = failed_locally;
-  for (const auto& f : failed_flags_per_rank) {
+  for (const auto &f : failed_flags_per_rank) {
     if (f) failed_globally = 1;
   }
 
@@ -329,7 +329,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_i
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestCaseEnd(const ::testing::TestCase& test_case) {
+void PrettyMPIUnitTestResultPrinter::OnTestCaseEnd(const ::testing::TestCase &test_case) {
   using namespace ::testing;
   if (!GTEST_FLAG(print_time) || rank_ != 0) return;
 
@@ -340,9 +340,9 @@ void PrettyMPIUnitTestResultPrinter::OnTestCaseEnd(const ::testing::TestCase& te
   fflush(stdout);
 }
 
-static std::string FormatSet(const std::set<int>& s) {
+std::string FormatSet(const std::set<int> &s) {
   std::string res;
-  for (const auto& val : s) {
+  for (const auto &val : s) {
     res += std::to_string(val);
     if (val != *(--s.end())) {
       res += ", ";
@@ -353,8 +353,7 @@ static std::string FormatSet(const std::set<int>& s) {
 }
 
 // Taken / modified from Googletest
-static void PrintFullTestCommentIfPresent(const std::string& type_param,
-                                          const std::string& value_param) {
+void PrintFullTestCommentIfPresent(const std::string &type_param, const std::string &value_param) {
   if (!type_param.empty() || !value_param.empty()) {
     printf(", where ");
     if (!type_param.empty()) {
@@ -369,7 +368,7 @@ static void PrintFullTestCommentIfPresent(const std::string& type_param,
 }
 
 // Taken / modified from Googletest
-void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTest& unit_test,
+void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTest &unit_test,
                                                         int /*iteration*/) {
   using namespace ::testing;
   failed_results_.Reset();
@@ -390,7 +389,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTes
   if (num_failed_tests_) {
     ColoredPrintf(COLOR_RED, "[  FAILED  ] ");
     printf("%s, listed below:\n", FormatTestCount(num_failed_tests_).c_str());
-    for (const auto& prop : failed_test_properties_) {
+    for (const auto &prop : failed_test_properties_) {
       if (!prop.should_run) continue;
       ColoredPrintf(COLOR_RED, "[  FAILED  ] ");
       printf("%s.%s", prop.case_name.c_str(), prop.name.c_str());
@@ -414,7 +413,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTes
 
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnEnvironmentsTearDownStart(
-    const ::testing::UnitTest& /*unit_test*/) {
+    const ::testing::UnitTest & /*unit_test*/) {
   if (rank_ != 0) return;
   ColoredPrintf(COLOR_GREEN, "[----------] ");
   printf("Global MPI test environment tear-down\n");
