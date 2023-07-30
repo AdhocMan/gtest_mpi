@@ -69,12 +69,17 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 #include <unistd.h>
+
+#include <algorithm>
 #include <cstdarg>
+#include <cstdint>
+#include <cstring>
 #include <string>
 
 namespace gtest_mpi {
-namespace { // no external linkage
+namespace {  // no external linkage
 
+using Int32 = std::int32_t;
 // Taken / modified from Googletest
 static const char kDisableTestFilter[] = "DISABLED_*:*/DISABLED_*";
 static const char kDeathTestCaseFilter[] = "*DeathTest:*DeathTest/*";
@@ -107,36 +112,40 @@ static void PrintFullTestCommentIfPresent(const ::testing::TestInfo& test_info) 
   }
 }
 
+bool CStringEquals(const char* l, const char* r) { return std::strcmp(l, r) == 0; }
+
+bool CaseInsensitiveCStringEquals(const char* l, const char* r) {
+  bool equal = true;
+
+  for (; equal && *l && *r; ++l, ++r) {
+    equal &= std::tolower(*l) == std::tolower(*r);
+  }
+
+  equal &= *l == *r;
+  return equal;
+}
+
 // Taken / modified from Googletest
 bool ShouldUseColor(bool stdout_is_tty) {
   using namespace ::testing;
-  using namespace ::testing::internal;
   const char* const gtest_color = GTEST_FLAG(color).c_str();
 
-  if (String::CaseInsensitiveCStringEquals(gtest_color, "auto")) {
-#if GTEST_OS_WINDOWS && !GTEST_OS_WINDOWS_MINGW
-    // On Windows the TERM variable is usually not set, but the
-    // console there does support colors.
-    return stdout_is_tty;
-#else
+  if (CaseInsensitiveCStringEquals(gtest_color, "auto")) {
     // On non-Windows platforms, we rely on the TERM variable.
     const char* const term = getenv("TERM");
     const bool term_supports_color =
-        String::CStringEquals(term, "xterm") || String::CStringEquals(term, "xterm-color") ||
-        String::CStringEquals(term, "xterm-256color") || String::CStringEquals(term, "screen") ||
-        String::CStringEquals(term, "screen-256color") || String::CStringEquals(term, "tmux") ||
-        String::CStringEquals(term, "tmux-256color") ||
-        String::CStringEquals(term, "rxvt-unicode") ||
-        String::CStringEquals(term, "rxvt-unicode-256color") ||
-        String::CStringEquals(term, "linux") || String::CStringEquals(term, "cygwin");
+        CStringEquals(term, "xterm") || CStringEquals(term, "xterm-color") ||
+        CStringEquals(term, "xterm-256color") || CStringEquals(term, "screen") ||
+        CStringEquals(term, "screen-256color") || CStringEquals(term, "tmux") ||
+        CStringEquals(term, "tmux-256color") || CStringEquals(term, "rxvt-unicode") ||
+        CStringEquals(term, "rxvt-unicode-256color") || CStringEquals(term, "linux") ||
+        CStringEquals(term, "cygwin");
     return stdout_is_tty && term_supports_color;
-#endif // GTEST_OS_WINDOWS
   }
 
-  return String::CaseInsensitiveCStringEquals(gtest_color, "yes") ||
-         String::CaseInsensitiveCStringEquals(gtest_color, "true") ||
-         String::CaseInsensitiveCStringEquals(gtest_color, "t") ||
-         String::CStringEquals(gtest_color, "1");
+  return CaseInsensitiveCStringEquals(gtest_color, "yes") ||
+         CaseInsensitiveCStringEquals(gtest_color, "true") ||
+         CaseInsensitiveCStringEquals(gtest_color, "t") || CStringEquals(gtest_color, "1");
   // We take "yes", "true", "t", and "1" as meaning "yes".  If the
   // value is neither one of these nor "auto", we treat it as "no" to
   // be conservative.
@@ -172,13 +181,12 @@ static void ColoredPrintf(GTestColor color, const char* fmt, ...) {
 
   printf("\033[0;3%sm", GetAnsiColorCode(color));
   vprintf(fmt, args);
-  printf("\033[m"); // Resets the terminal to default.
+  printf("\033[m");  // Resets the terminal to default.
   va_end(args);
 }
 
 // Taken / modified from Googletest
-::testing::internal::Int32 Int32FromEnvOrDie(const char* var,
-                                             ::testing::internal::Int32 default_val) {
+Int32 Int32FromEnvOrDie(const char* var, Int32 default_val) {
   using namespace ::testing;
   using namespace ::testing::internal;
   const char* str_val = getenv(var);
@@ -197,7 +205,7 @@ static void ColoredPrintf(GTestColor color, const char* fmt, ...) {
 static std::string FormatCountableNoun(int count, const char* singular_form,
                                        const char* plural_form) {
   using namespace ::testing;
-  return internal::StreamableToString(count) + " " + (count == 1 ? singular_form : plural_form);
+  return std::to_string(count) + " " + (count == 1 ? singular_form : plural_form);
 }
 
 // Taken / modified from Googletest
@@ -392,7 +400,6 @@ struct TestPartResultCollection {
   StringCollection file_names;
 };
 
-} // anonymous namespace
-} // namespace gtest_mpi
+}  // anonymous namespace
+}  // namespace gtest_mpi
 #endif
-

@@ -69,8 +69,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 #include <unistd.h>
+
+#include <cstdlib>
 #include <set>
 #include <string>
+
 #include "gtest_mpi_internal.hpp"
 
 namespace gtest_mpi {
@@ -149,7 +152,6 @@ private:
 void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitTest& unit_test,
                                                           int iteration) {
   using namespace ::testing;
-  using namespace ::testing::internal;
   if (rank_ != 0) return;
 
   if (GTEST_FLAG(repeat) != 1)
@@ -159,14 +161,14 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitT
 
   // Prints the filter if it's not *.  This reminds the user that some
   // tests may be skipped.
-  if (!String::CStringEquals(filter, kUniversalFilter)) {
+  if (!CStringEquals(filter, kUniversalFilter)) {
     ColoredPrintf(COLOR_YELLOW, "Note: %s filter = %s\n", GTEST_NAME_, filter);
   }
 
   if (ShouldShard(kTestTotalShards, kTestShardIndex, false)) {
     const Int32 shard_index = Int32FromEnvOrDie(kTestShardIndex, -1);
     ColoredPrintf(COLOR_YELLOW, "Note: This is test shard %d of %s.\n",
-                  static_cast<int>(shard_index) + 1, internal::posix::GetEnv(kTestTotalShards));
+                  static_cast<int>(shard_index) + 1, std::getenv("GTEST_SHARD_STATUS_FILE"));
   }
 
   if (GTEST_FLAG(shuffle)) {
@@ -181,6 +183,22 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationStart(const ::testing::UnitT
 }
 
 // Taken / modified from Googletest
+// Formats a source file path and a line number as they would appear
+// in an error message from the compiler used to compile this code.
+GTEST_API_ ::std::string FormatFileLocation(const char* file, int line) {
+  const std::string file_name(file == nullptr ? "unkown file" : file);
+
+  if (line < 0) {
+    return file_name + ":";
+  }
+#ifdef _MSC_VER
+  return file_name + "(" + std::to_string(line) + "):";
+#else
+  return file_name + ":" + std::to_string(line) + ":";
+#endif  // _MSC_VER
+}
+
+// Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnEnvironmentsSetUpStart(
     const ::testing::UnitTest& /*unit_test*/) {
   if (rank_ != 0) return;
@@ -192,7 +210,6 @@ void PrettyMPIUnitTestResultPrinter::OnEnvironmentsSetUpStart(
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnTestCaseStart(const ::testing::TestCase& test_case) {
   using namespace ::testing;
-  using namespace ::testing::internal;
   if (rank_ != 0) return;
   const std::string counts = FormatCountableNoun(test_case.test_to_run_count(), "test", "tests");
   ColoredPrintf(COLOR_GREEN, "[----------] ");
@@ -218,7 +235,6 @@ void PrettyMPIUnitTestResultPrinter::OnTestStart(const ::testing::TestInfo& test
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartResult& result) {
   using namespace ::testing;
-  using namespace ::testing::internal;
   // If the test part succeeded, we don't need to do anything.
   if (result.type() == TestPartResult::kSuccess) return;
   failed_results_.Add(result);
@@ -228,13 +244,11 @@ void PrettyMPIUnitTestResultPrinter::OnTestPartResult(const ::testing::TestPartR
 void PrintFailedTestResultCollection(const TestPartResultCollection& collection, int rank) {
   for (std::size_t i = 0; i < collection.Size(); ++i) {
     std::string m =
-        (::testing::Message() << "Rank " << rank << ": "
-                              << ::testing::internal::FormatFileLocation(
-                                     collection.file_names.get_str(i), collection.line_numbers[i])
-                              << " "
-                              << TestPartResultTypeToString(
-                                     ::testing::TestPartResult::Type(collection.types[i]))
-                              << collection.messages.get_str(i))
+        (::testing::Message()
+         << "Rank " << rank << ": "
+         << FormatFileLocation(collection.file_names.get_str(i), collection.line_numbers[i]) << " "
+         << TestPartResultTypeToString(::testing::TestPartResult::Type(collection.types[i]))
+         << collection.messages.get_str(i))
             .GetString();
     printf("%s\n", m.c_str());
     fflush(stdout);
@@ -244,7 +258,6 @@ void PrintFailedTestResultCollection(const TestPartResultCollection& collection,
 // Taken / modified from Googletest
 void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_info) {
   using namespace ::testing;
-  using namespace ::testing::internal;
 
   // check if any ranks failed
   int failed_locally = failed_results_.Size() > 0;
@@ -308,7 +321,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestEnd(const ::testing::TestInfo& test_i
   if (failed_globally) PrintFullTestCommentIfPresent(test_info);
 
   if (GTEST_FLAG(print_time)) {
-    printf(" (%s ms)\n", internal::StreamableToString(test_info.result()->elapsed_time()).c_str());
+    printf(" (%s ms)\n", std::to_string(test_info.result()->elapsed_time()).c_str());
   } else {
     printf("\n");
   }
@@ -323,7 +336,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestCaseEnd(const ::testing::TestCase& te
   const std::string counts = FormatCountableNoun(test_case.test_to_run_count(), "test", "tests");
   ColoredPrintf(COLOR_GREEN, "[----------] ");
   printf("%s from %s (%s ms total)\n\n", counts.c_str(), test_case.name(),
-         internal::StreamableToString(test_case.elapsed_time()).c_str());
+         std::to_string(test_case.elapsed_time()).c_str());
   fflush(stdout);
 }
 
@@ -368,7 +381,7 @@ void PrettyMPIUnitTestResultPrinter::OnTestIterationEnd(const ::testing::UnitTes
   printf("%s from %s ran on %d ranks.", FormatTestCount(unit_test.test_to_run_count()).c_str(),
          FormatTestCaseCount(unit_test.test_case_to_run_count()).c_str(), comm_size_);
   if (GTEST_FLAG(print_time)) {
-    printf(" (%s ms total)", internal::StreamableToString(unit_test.elapsed_time()).c_str());
+    printf(" (%s ms total)", std::to_string(unit_test.elapsed_time()).c_str());
   }
   printf("\n");
   ColoredPrintf(COLOR_GREEN, "[  PASSED  ] ");
@@ -412,4 +425,3 @@ void PrettyMPIUnitTestResultPrinter::OnEnvironmentsTearDownStart(
 }  // namespace gtest_mpi
 
 #endif
-
