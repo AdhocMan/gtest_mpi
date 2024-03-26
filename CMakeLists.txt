@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(gtest_mpi LANGUAGES CXX VERSION 2.0.0)
 
 include(GNUInstallDirs)
@@ -19,6 +19,10 @@ target_compile_features(gtest_mpi PUBLIC cxx_std_14)
 target_link_libraries(gtest_mpi PUBLIC MPI::MPI_CXX GTest::gtest)
 target_include_directories(gtest_mpi PUBLIC $<INSTALL_INTERFACE:include>) # for install(EXPORT ...)
 target_include_directories(gtest_mpi PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>) # for export(...)
+
+
+set_property(TARGET gtest_mpi PROPERTY VERSION ${CMAKE_PROJECT_VERSION})
+set_property(TARGET gtest_mpi PROPERTY SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR})
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
