@@ -112,7 +112,11 @@ void PrintFullTestCommentIfPresent(const ::testing::TestInfo &test_info) {
   }
 }
 
-bool CStringEquals(const char *l, const char *r) { return std::strcmp(l, r) == 0; }
+bool CStringEquals(const char *l, const char *r) {
+  if (l == nullptr) return r == nullptr;
+  if (r == nullptr) return false;
+  return std::strcmp(l, r) == 0; 
+}
 
 bool CaseInsensitiveCStringEquals(const char *l, const char *r) {
   bool equal = true;
